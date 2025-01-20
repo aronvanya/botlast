@@ -3,15 +3,13 @@ import os
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return {"status": "Server is running"}
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.get_json()
-    print(data)  # Для отладки, можно удалить позже
-    return {"ok": True}
-
-if __name__ == "__main__":
-    app.run()
+    if request.headers.get("content-type") == "application/json":
+        update = request.get_json()
+        # Здесь можно обрабатывать update
+        return {"status": "ok"}, 200
+    else:
+        return {"status": "Unsupported Media Type"}, 415

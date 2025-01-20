@@ -9,7 +9,10 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 def webhook():
     if request.headers.get('content-type') == 'application/json':
         update = request.get_json()
-        # Здесь обработка сообщений бота
+        # Здесь логика обработки обновлений от Telegram
         return {"status": "ok"}, 200
     else:
         return {"status": "Unsupported Media Type"}, 415
+
+if __name__ == '__main__':
+    app.run(debug=True)

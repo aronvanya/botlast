@@ -1,7 +1,7 @@
 import os
+from flask import Flask, request, jsonify
 from telegram import Update, Bot
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -9,14 +9,14 @@ app = Flask(__name__)
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
 
-# Создаём диспетчер
+# Создаём диспетчер для обработки команд и сообщений
 dispatcher = Dispatcher(bot, None, workers=0)
 
 # Обработчик команды /start
 def start(update, context):
-    update.message.reply_text("Привет! Я бот на Vercel. Отправьте мне сообщение.")
+    update.message.reply_text("Привет! Я бот, работающий через вебхук на Vercel.")
 
-# Обработчик всех текстовых сообщений
+# Обработчик текстовых сообщений
 def echo(update, context):
     update.message.reply_text(f"Вы сказали: {update.message.text}")
 
@@ -24,7 +24,7 @@ def echo(update, context):
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-# Обработка вебхука
+# Маршрут для обработки вебхуков
 @app.route("/", methods=["POST"])
 def webhook():
     if request.method == "POST":
@@ -32,7 +32,7 @@ def webhook():
         dispatcher.process_update(update)
         return "OK", 200
 
-# Проверка, если сервер работает
+# Маршрут для проверки состояния сервера
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"status": "Server is running"}), 200

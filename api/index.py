@@ -1,93 +1,38 @@
-<<<<<<< HEAD
 import os
-import json
-import requests
+from telegram import Update, Bot
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+from flask import Flask, request, jsonify
 
-def handler(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            chat_id = data['message']['chat']['id']
-            text = data['message']['text']
-            user_name = data['message']['from']['first_name']
+app = Flask(__name__)
 
-            welcome_message = f"Привет, {user_name}! Ты отправил: {text}"
+# Получаем токен из переменной окружения
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+bot = Bot(token=TOKEN)
 
-            TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-            payload = {
-                'chat_id': chat_id,
-                'text': welcome_message
-            }
+# Создаём диспетчер
+dispatcher = Dispatcher(bot, None, workers=0)
 
-            response = requests.post(url, data=payload)
+# Обработчик команды /start
+def start(update, context):
+    update.message.reply_text("Привет! Я бот на Vercel. Отправьте мне сообщение.")
 
-            # Проверка успешности запроса к Telegram
-            if response.status_code != 200:
-                return {
-                    "statusCode": 500,
-                    "body": f"Error sending message: {response.text}"
-                }
+# Обработчик всех текстовых сообщений
+def echo(update, context):
+    update.message.reply_text(f"Вы сказали: {update.message.text}")
 
-            return {
-                "statusCode": 200,
-                "body": json.dumps({"status": "success"})
-            }
+# Регистрируем обработчики
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-        except Exception as e:
-            return {
-                "statusCode": 500,
-                "body": f"Error: {str(e)}"
-            }
+# Обработка вебхука
+@app.route("/", methods=["POST"])
+def webhook():
+    if request.method == "POST":
+        update = Update.de_json(request.get_json(force=True), bot)
+        dispatcher.process_update(update)
+        return "OK", 200
 
-    return {
-        "statusCode": 404,
-        "body": "Not Found"
-    }
-=======
-import os
-import json
-import requests
-
-def handler(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            chat_id = data['message']['chat']['id']
-            text = data['message']['text']
-            user_name = data['message']['from']['first_name']
-
-            welcome_message = f"Привет, {user_name}! Ты отправил: {text}"
-
-            TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-            payload = {
-                'chat_id': chat_id,
-                'text': welcome_message
-            }
-
-            response = requests.post(url, data=payload)
-
-            # Проверка успешности запроса к Telegram
-            if response.status_code != 200:
-                return {
-                    "statusCode": 500,
-                    "body": f"Error sending message: {response.text}"
-                }
-
-            return {
-                "statusCode": 200,
-                "body": json.dumps({"status": "success"})
-            }
-
-        except Exception as e:
-            return {
-                "statusCode": 500,
-                "body": f"Error: {str(e)}"
-            }
-
-    return {
-        "statusCode": 404,
-        "body": "Not Found"
-    }
->>>>>>> 9dbbe661edd588c9888831b8ba2f77b586a50002
+# Проверка, если сервер работает
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "Server is running"}), 200
